@@ -243,6 +243,6 @@ public class ClaimMap {
     }
 
     public boolean isProtectionBlock(@NotNull String worldName, @NotNull BlockPos blockPos) {
-        return this.regionByBlockPosMap.get(worldName.toLowerCase()).containsKey(blockPos);
+        return this.regionByBlockPosMap.getOrDefault(worldName.toLowerCase(), Collections.emptyMap()).containsKey(blockPos);
     }
 }
