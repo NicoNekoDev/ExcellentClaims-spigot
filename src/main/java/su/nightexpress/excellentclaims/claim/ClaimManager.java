@@ -1,16 +1,14 @@
 package su.nightexpress.excellentclaims.claim;
 
 import org.bukkit.*;
-import org.bukkit.block.Block;
-import org.bukkit.block.BlockState;
-import org.bukkit.block.Chest;
-import org.bukkit.block.Container;
+import org.bukkit.block.*;
 import org.bukkit.damage.DamageSource;
 import org.bukkit.entity.*;
 import org.bukkit.event.block.Action;
 import org.bukkit.inventory.InventoryHolder;
 import org.bukkit.projectiles.BlockProjectileSource;
 import org.bukkit.projectiles.ProjectileSource;
+import org.checkerframework.checker.units.qual.N;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import su.nightexpress.economybridge.api.Currency;
@@ -51,15 +49,18 @@ import su.nightexpress.nightcore.language.entry.LangText;
 import su.nightexpress.nightcore.manager.AbstractManager;
 import su.nightexpress.nightcore.util.FileUtil;
 import su.nightexpress.nightcore.util.NumberUtil;
+import su.nightexpress.nightcore.util.Pair;
 import su.nightexpress.nightcore.util.StringUtil;
 import su.nightexpress.nightcore.util.text.NightMessage;
 
 import java.io.File;
 import java.util.*;
+import java.util.Comparator;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class ClaimManager extends AbstractManager<ClaimPlugin> {
 
@@ -78,12 +79,49 @@ public class ClaimManager extends AbstractManager<ClaimPlugin> {
         this.addListener(new FlagListener(this.plugin, this));
 
         this.addAsyncTask(this::saveClaims, Config.GENERAL_SAVE_INTERVAL.get());
+        this.addTask(this::showBounds, 20L);
     }
 
     @Override
     protected void onShutdown() {
         this.saveClaims();
         this.claimMap.clear();
+    }
+
+    public void showBounds() {
+        Set<RegionClaim> regions = new HashSet<>();
+        Bukkit.getWorlds().forEach(world -> this.claimMap.getRegionsByChunkMap(world).forEach((chunkPos, regionClaims) -> regions.addAll(regionClaims)));
+        Bukkit.getOnlinePlayers()
+                .forEach(player -> {
+                    Map<BlockPos, Particle.DustOptions> edges = new HashMap<>();
+                    Set<Cuboid> cuboids = new HashSet<>();
+                    regions.stream()
+                            .filter(region -> player.getWorld() == region.getWorld())
+                            .filter(region -> player.getLocation().distance(region.getCuboid().getCenter().toLocation(player.getWorld())) < 200)
+                            .forEach(region -> {
+                                Particle.DustOptions dustOptions = new Particle.DustOptions(Color.fromRGB(255, 0, 0), 2F);
+                                if (region.isMember(player))
+                                    dustOptions = new Particle.DustOptions(Color.fromRGB(255, 128, 0), 2F);
+                                if (region.isOwner(player))
+                                    dustOptions = new Particle.DustOptions(Color.fromRGB(0, 255, 0), 2F);
+                                for (BlockPos edge : region.getCuboid().borderCornerWiresXZ(player.getEyeLocation().getBlockY())) {
+                                    edges.put(edge, dustOptions);
+                                }
+                                cuboids.add(region.getCuboid());
+                            });
+                    edges.forEach((edge, dustOptions) -> {
+                        boolean north = cuboids.stream().anyMatch(cuboid -> cuboid.contains(edge.getRelative(BlockFace.NORTH)));
+                        boolean south = cuboids.stream().anyMatch(cuboid -> cuboid.contains(edge.getRelative(BlockFace.SOUTH)));
+                        boolean west = cuboids.stream().anyMatch(cuboid -> cuboid.contains(edge.getRelative(BlockFace.WEST)));
+                        boolean east = cuboids.stream().anyMatch(cuboid -> cuboid.contains(edge.getRelative(BlockFace.EAST)));
+                        boolean north_east = cuboids.stream().anyMatch(cuboid -> cuboid.contains(edge.getRelative(BlockFace.NORTH_EAST)));
+                        boolean north_west = cuboids.stream().anyMatch(cuboid -> cuboid.contains(edge.getRelative(BlockFace.NORTH_WEST)));
+                        boolean south_east = cuboids.stream().anyMatch(cuboid -> cuboid.contains(edge.getRelative(BlockFace.SOUTH_EAST)));
+                        boolean south_west = cuboids.stream().anyMatch(cuboid -> cuboid.contains(edge.getRelative(BlockFace.SOUTH_WEST)));
+                        if (!(north && south && west && east && north_east && north_west && south_east && south_west))
+                            player.spawnParticle(Particle.DUST, edge.toLocation(player.getWorld()).add(0.5, 0.1, 0.5), 1, dustOptions);
+                    });
+                });
     }
 
     public void saveClaims() {
@@ -130,16 +168,14 @@ public class ClaimManager extends AbstractManager<ClaimPlugin> {
         if (claim.load()) {
             claim.reactivate();
             this.claimMap.add(claim);
-        }
-        else this.plugin.error("Claim not loaded: '" + claim.getFile().getPath() + "'!");
+        } else this.plugin.error("Claim not loaded: '" + claim.getFile().getPath() + "'!");
     }
 
     private void loadWilderness(@NotNull World world) {
         Wilderness wilderness = this.claimMap.getWilderness(world);
         if (wilderness == null) {
             this.createWilderness(world);
-        }
-        else if (!wilderness.isActive()) wilderness.activate(world);
+        } else if (!wilderness.isActive()) wilderness.activate(world);
     }
 
     private void deleteClaim(@NotNull Claim claim) {
@@ -208,18 +244,25 @@ public class ClaimManager extends AbstractManager<ClaimPlugin> {
 //    }
 
     @NotNull
-    private ClaimedLand createLandClaim(@NotNull Player player, @NotNull World world, @NotNull ChunkPos chunkPos, @NotNull String id) {
+    private ClaimedLand createLandClaim(@NotNull Player player, @NotNull World world, @NotNull ChunkPos
+            chunkPos, @NotNull String id) {
         return this.createClaim(player, id, ClaimType.CHUNK, world, file -> new ClaimedLand(plugin, file), claimedChunk -> {
             claimedChunk.setSpawnLocation(DirectionalPos.from(world.getHighestBlockAt(chunkPos.getX() << 4, chunkPos.getZ() << 4)));
             claimedChunk.getPositions().add(chunkPos);
+            claimedChunk.setDisplayName(Config.LAND_DEFAULT_NAME.get().replace(Placeholders.PLAYER_NAME, player.getName()));
+            claimedChunk.setDescription(Config.LAND_DEFAULT_DESCRIPTION.get().replace(Placeholders.PLAYER_NAME, player.getName()));
         });
     }
 
     @NotNull
-    private ClaimedRegion createRegionClaim(@NotNull Player player, @NotNull World world, @NotNull Cuboid cuboid, @NotNull String id) {
+    private ClaimedRegion createRegionClaim(@NotNull Player player, @NotNull World world, @Nullable BlockPos
+            blockPos, @NotNull Cuboid cuboid, @NotNull String id) {
         return this.createClaim(player, id, ClaimType.REGION, world, file -> new ClaimedRegion(plugin, file), claimedRegion -> {
-            claimedRegion.setSpawnLocation(DirectionalPos.from(cuboid.getCenter()));
+            claimedRegion.setSpawnLocation(DirectionalPos.from(world.getHighestBlockAt(cuboid.getCenter().toLocation(world))));
             claimedRegion.setCuboid(cuboid);
+            claimedRegion.setBlockPos(blockPos);
+            claimedRegion.setDisplayName(Config.LAND_DEFAULT_NAME.get().replace(Placeholders.PLAYER_NAME, player.getName()));
+            claimedRegion.setDescription(Config.LAND_DEFAULT_DESCRIPTION.get().replace(Placeholders.PLAYER_NAME, player.getName()));
         });
     }
 
@@ -252,7 +295,8 @@ public class ClaimManager extends AbstractManager<ClaimPlugin> {
         return this.claimLand(player, world, BlockPos.from(location), name);
     }
 
-    public boolean claimLand(@NotNull Player player, @NotNull World world, @NotNull BlockPos blockPos, @NotNull String name) {
+    public boolean claimLand(@NotNull Player player, @NotNull World world, @NotNull BlockPos
+            blockPos, @NotNull String name) {
         if (!player.hasPermission(Perms.BYPASS_CHUNK_CLAIM_WORLD)) {
             Set<String> badWorlds = Config.LAND_DISABLED_WORLDS.get();
             if (badWorlds.contains(world.getName().toLowerCase())) {
@@ -330,8 +374,7 @@ public class ClaimManager extends AbstractManager<ClaimPlugin> {
         if (landByName == null) {
             claim = this.createLandClaim(player, world, chunkPos, name);
             claim.setDisplayName(StringUtil.capitalizeUnderscored(name));
-        }
-        else {
+        } else {
             claim = landByName;
             landByName.getPositions().add(chunkPos);
             landByName.setSaveRequired(true);
@@ -483,7 +526,7 @@ public class ClaimManager extends AbstractManager<ClaimPlugin> {
             cuboid = cuboid.maxHeight(world);
         }
 
-        if (!this.claimRegion(player, world, cuboid, name)) {
+        if (!this.claimRegion(player, world, null, cuboid, name)) {
             return false;
         }
 
@@ -491,11 +534,13 @@ public class ClaimManager extends AbstractManager<ClaimPlugin> {
         return true;
     }
 
-    public boolean claimRegion(@NotNull Player player, @NotNull World world, @NotNull BlockPos from, @NotNull BlockPos to, @NotNull String name) {
-        return this.claimRegion(player, world, new Cuboid(from, to), name);
+    public boolean claimRegion(@NotNull Player player, @NotNull World world, @NotNull BlockPos
+            blockPos, @NotNull BlockPos from, @NotNull BlockPos to, @NotNull String id) {
+        return this.claimRegion(player, world, blockPos, new Cuboid(from, to), id);
     }
 
-    public boolean claimRegion(@NotNull Player player, @NotNull World world, @NotNull Cuboid cuboid, @NotNull String name) {
+    public boolean claimRegion(@NotNull Player player, @NotNull World world, @Nullable BlockPos
+            blockPos, @NotNull Cuboid cuboid, @NotNull String id) {
         if (!player.hasPermission(Perms.BYPASS_REGION_CLAIM_WORLD)) {
             Set<String> badWorlds = Config.REGION_DISABLED_WORLDS.get();
             if (badWorlds.contains(world.getName().toLowerCase())) {
@@ -504,21 +549,9 @@ public class ClaimManager extends AbstractManager<ClaimPlugin> {
             }
         }
 
-        String id = StringUtil.transformForID(name.toLowerCase());
+        id = StringUtil.transformForID(id.toLowerCase());
         if (id.isBlank() || id.equalsIgnoreCase(Wilderness.ID)) {
             Lang.REGION_CREATE_ERROR_BAD_NAME.getMessage().send(player);
-            return false;
-        }
-
-        int maxBlocks = ClaimUtils.getRegionBlocksLimit(player);
-        // Do not care about Y axis if all regions must be expanded to the whole Y axis.
-        DimensionType type = Config.isRegionsMaxHeight() ? DimensionType._2D : DimensionType._3D;
-        int volume = cuboid.getVolume(type);
-
-        if (maxBlocks > 0 && !player.hasPermission(Perms.BYPASS_REGION_BLOCKS_AMOUNT) && volume > maxBlocks) {
-            Lang.REGION_CREATE_ERROR_MAX_BLOCKS.getMessage().send(player, replacer -> replacer
-                .replace(Placeholders.GENERIC_AMOUNT, NumberUtil.formatCompact(maxBlocks))
-            );
             return false;
         }
 
@@ -568,7 +601,7 @@ public class ClaimManager extends AbstractManager<ClaimPlugin> {
         this.plugin.getPluginManager().callEvent(createEvent);
         if (createEvent.isCancelled()) return false;
 
-        ClaimedRegion claimedRegion = this.createRegionClaim(player, world, cuboid, id);
+        ClaimedRegion claimedRegion = this.createRegionClaim(player, world, blockPos, cuboid, id);
 
         Lang.REGION_CREATE_SUCCESS.getMessage().send(player, replacer -> replacer.replace(claimedRegion.replacePlaceholders()));
 
@@ -576,6 +609,15 @@ public class ClaimManager extends AbstractManager<ClaimPlugin> {
         this.plugin.getPluginManager().callEvent(createdEvent);
 
         return true;
+    }
+
+    public boolean removeRegionByBlock(@NotNull Player player, @NotNull World world, @NotNull BlockPos blockPos) {
+        RegionClaim claim = this.getRegionClaimByBlock(world, blockPos);
+        if (claim == null) {
+            //Lang.REGION_REMOVE_ERROR_NO_REGION.getMessage().send(player);
+            return true;
+        }
+        return this.removeRegion(player, claim);
     }
 
     public boolean removeRegion(@NotNull Player player, @NotNull String name) {
@@ -605,6 +647,9 @@ public class ClaimManager extends AbstractManager<ClaimPlugin> {
         RegionRemoveEvent removeEvent = new RegionRemoveEvent(claim, player);
         this.plugin.getPluginManager().callEvent(removeEvent);
         if (removeEvent.isCancelled()) return false;
+
+        if (claim.getWorld() != null && claim.getBlockPos() != null)
+            claim.getBlockPos().toLocation(claim.getWorld()).getBlock().breakNaturally();
 
         this.deleteClaim(claim);
 
@@ -799,7 +844,6 @@ public class ClaimManager extends AbstractManager<ClaimPlugin> {
     }
 
 
-
     public boolean canUseBlock(@NotNull Entity entity, @NotNull Block block, @Nullable Action action) {
         Material blockType = block.getType();
         Location location = block.getLocation();
@@ -811,26 +855,20 @@ public class ClaimManager extends AbstractManager<ClaimPlugin> {
 
         if (Tag.PRESSURE_PLATES.isTagged(blockType) && (action == Action.PHYSICAL || action == null)) {
             explicitFlag = PlayerFlags.USE_PLATES;
-        }
-        else if ((Tag.BUTTONS.isTagged(blockType) || blockType == Material.LEVER) && action != Action.PHYSICAL) {
+        } else if ((Tag.BUTTONS.isTagged(blockType) || blockType == Material.LEVER) && action != Action.PHYSICAL) {
             explicitFlag = PlayerFlags.USE_BUTTONS;
-        }
-        else if ((Tag.DOORS.isTagged(blockType) || Tag.TRAPDOORS.isTagged(blockType) || Tag.FENCE_GATES.isTagged(blockType)) && action != Action.PHYSICAL) {
+        } else if ((Tag.DOORS.isTagged(blockType) || Tag.TRAPDOORS.isTagged(blockType) || Tag.FENCE_GATES.isTagged(blockType)) && action != Action.PHYSICAL) {
             explicitFlag = PlayerFlags.USE_DOORS;
-        }
-        else if (blockType == Material.TURTLE_EGG && (action == Action.PHYSICAL || action == null)) {
+        } else if (blockType == Material.TURTLE_EGG && (action == Action.PHYSICAL || action == null)) {
             explicitFlag = PlayerFlags.BLOCK_TRAMPLING;
-        }
-        else if (blockType == Material.TRIPWIRE && (action == Action.PHYSICAL || action == null)) {
+        } else if (blockType == Material.TRIPWIRE && (action == Action.PHYSICAL || action == null)) {
             explicitFlag = PlayerFlags.USE_TRIPWIRES;
-        }
-        else if (blockState instanceof Container container) {
+        } else if (blockState instanceof Container container) {
             explicitPerm = ClaimPermission.CONTAINERS;
 
             if (container instanceof Chest) {
                 explicitFlag = PlayerFlags.CHEST_ACCESS;
-            }
-            else explicitFlag = PlayerFlags.CONTAINER_ACCESS;
+            } else explicitFlag = PlayerFlags.CONTAINER_ACCESS;
         }
 
 
@@ -842,8 +880,7 @@ public class ClaimManager extends AbstractManager<ClaimPlugin> {
 
         if (entity instanceof Player player) {
             user = player;
-        }
-        else if (entity instanceof Projectile projectile) {
+        } else if (entity instanceof Projectile projectile) {
             ProjectileSource source = projectile.getShooter();
             if (source instanceof Player player) user = player;
             else if (source instanceof BlockProjectileSource bs) blockSource = bs;
@@ -896,28 +933,22 @@ public class ClaimManager extends AbstractManager<ClaimPlugin> {
 
         if (entityType == EntityType.VILLAGER) {
             explicitFlag = PlayerFlags.VILLAGER_INTERACT;
-        }
-        else if (entityType == EntityType.ARMOR_STAND) {
+        } else if (entityType == EntityType.ARMOR_STAND) {
             explicitFlag = PlayerFlags.ARMOR_STAND_USE;
-        }
-        else if (entity instanceof ItemFrame) {
+        } else if (entity instanceof ItemFrame) {
             explicitFlag = PlayerFlags.BLOCK_BREAK; // TODO Explicit flag
-        }
-        else if (entity instanceof Vehicle && !(entity instanceof LivingEntity)) {
+        } else if (entity instanceof Vehicle && !(entity instanceof LivingEntity)) {
             if (entity instanceof InventoryHolder) {
                 if (entityType == EntityType.CHEST_MINECART || entity instanceof ChestBoat) {
                     explicitFlag = PlayerFlags.CHEST_ACCESS;
-                }
-                else explicitFlag = PlayerFlags.CONTAINER_ACCESS;
-            }
-            else explicitFlag = PlayerFlags.VEHICLE_USE;
+                } else explicitFlag = PlayerFlags.CONTAINER_ACCESS;
+            } else explicitFlag = PlayerFlags.VEHICLE_USE;
         }
 
         if (explicitFlag != null) {
             if (!claim.hasFlag(explicitFlag) || claim.getFlag(explicitFlag)) return true;
             //if (!claim.getFlag(explicitFlag)) return false;
-        }
-        else {
+        } else {
             if (!claim.hasFlag(PlayerFlags.ENTITY_INTERACT_MODE)) return true;
 
             ListMode mode = claim.getFlag(PlayerFlags.ENTITY_INTERACT_MODE);
@@ -954,40 +985,31 @@ public class ClaimManager extends AbstractManager<ClaimPlugin> {
         if (target instanceof Player targetPlayer) {
             if (damagerPlayer != null) {
                 explicitFlag = PlayerFlags.PLAYER_DAMAGE_PLAYERS;
-            }
-            else if (damager instanceof Monster) {
+            } else if (damager instanceof Monster) {
                 explicitFlag = EntityFlags.MONSTER_DAMAGE_PLAYERS;
-            }
-            else {
+            } else {
                 modeFlag = PlayerFlags.PLAYER_DAMAGE_MODE;
                 listFlag = PlayerFlags.PLAYER_DAMAGE_LIST;
             }
-        }
-        else if (target instanceof ItemFrame) {
+        } else if (target instanceof ItemFrame) {
             explicitFlag = PlayerFlags.BLOCK_BREAK; // TODO Explicit flag
-        }
-        else if (targetType == EntityType.VILLAGER) {
+        } else if (targetType == EntityType.VILLAGER) {
             if (damagerPlayer != null) {
                 explicitFlag = PlayerFlags.PLAYER_DAMAGE_VILLAGERS;
-            }
-            else return true;
-        }
-        else if (target instanceof Animals) {
+            } else return true;
+        } else if (target instanceof Animals) {
             if (damagerPlayer != null) {
                 explicitFlag = PlayerFlags.PLAYER_DAMAGE_ANIMALS;
-            }
-            else {
+            } else {
                 modeFlag = EntityFlags.ANIMAL_DAMAGE_MODE;
                 listFlag = EntityFlags.ANIMAL_DAMAGE_LIST;
             }
-        }
-        else return true;
+        } else return true;
 
         if (explicitFlag != null) {
             if (!claim.hasFlag(explicitFlag) || claim.getFlag(explicitFlag)) return true;
             //if (!claim.getFlag(explicitFlag)) return false;
-        }
-        else {
+        } else {
             if (!claim.hasFlag(modeFlag)) return true;
 
             ListMode mode = claim.getFlag(modeFlag);
@@ -1127,7 +1149,6 @@ public class ClaimManager extends AbstractManager<ClaimPlugin> {
     }
 
 
-
     @NotNull
     public String getClaimsDirectory(@NotNull ClaimType type, @NotNull World world) {
         return this.getClaimsDirectory(type, world.getName());
@@ -1179,20 +1200,21 @@ public class ClaimManager extends AbstractManager<ClaimPlugin> {
     }
 
     @Nullable
-    public Claim getPrioritizedClaim(@NotNull String worldName, @NotNull BlockPos blockPos, @Nullable ClaimType type) {
+    public Claim getPrioritizedClaim(@NotNull String worldName, @NotNull BlockPos blockPos, @Nullable ClaimType
+            type) {
         Claim best;
 
         if (type != null) {
             best = switch (type) {
                 case CHUNK -> this.getLandClaim(worldName, blockPos);
-                case REGION -> this.getRegionClaims(worldName, blockPos).stream().max(Comparator.comparingInt(Claim::getPriority)).orElse(null);
+                case REGION ->
+                        this.getRegionClaims(worldName, blockPos).stream().max(Comparator.comparingInt(Claim::getPriority)).orElse(null);
             };
 //
 //            if (type == ClaimType.CHUNK) return this.getChunkClaim(worldName, blockPos);
 //
 //            return this.getRegionClaims(worldName, blockPos).stream().max(Comparator.comparingInt(Claim::getPriority)).orElse(null);
-        }
-        else {
+        } else {
             Set<Claim> set = new HashSet<>(this.getRegionClaims(worldName, blockPos));
 
             LandClaim landClaim = this.getLandClaim(worldName, blockPos);
@@ -1529,7 +1551,6 @@ public class ClaimManager extends AbstractManager<ClaimPlugin> {
     }
 
 
-
     // Get region names.
 
     @NotNull
@@ -1561,7 +1582,6 @@ public class ClaimManager extends AbstractManager<ClaimPlugin> {
     public List<String> getRegionNames(@NotNull String worldName, @NotNull Predicate<Claim> predicate) {
         return this.getRegionClaims(worldName).stream().filter(predicate).map(Claim::getId).toList();
     }
-
 
 
     // Get all region claims.
@@ -1679,5 +1699,13 @@ public class ClaimManager extends AbstractManager<ClaimPlugin> {
     @Nullable
     public RegionClaim getRegionClaim(@NotNull String worldName, @NotNull String id) {
         return this.claimMap.getRegionByIdMap(worldName).get(id);
+    }
+
+    public RegionClaim getRegionClaimByBlock(@NotNull World world, @NotNull BlockPos blockPos) {
+        return this.claimMap.getRegionByBlockPos(world.getName(), blockPos);
+    }
+
+    public boolean isProtectionBlock(@NotNull World world, @NotNull BlockPos blockPos) {
+        return this.claimMap.isProtectionBlock(world, blockPos);
     }
 }

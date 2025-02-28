@@ -43,6 +43,7 @@ public class SelectionManager extends AbstractManager<ClaimPlugin> {
     private final Map<UUID, Selection>  selectionMap;
     private final Map<UUID, Tracker>   chunkTracker;
     private final Map<UUID, LandClaim> mergeMap;
+    private final Set<UUID>            disablePlacingProtections;
 
     private BlockHighlighter highlighter;
 
@@ -51,6 +52,7 @@ public class SelectionManager extends AbstractManager<ClaimPlugin> {
         this.selectionMap = new HashMap<>();
         this.chunkTracker = new ConcurrentHashMap<>();
         this.mergeMap = new HashMap<>();
+        this.disablePlacingProtections = new HashSet<>();
     }
 
     @Override
@@ -69,6 +71,18 @@ public class SelectionManager extends AbstractManager<ClaimPlugin> {
         }
 
         this.plugin.getServer().getOnlinePlayers().forEach(this::removeAll);
+    }
+
+    public void setDisablePlacingProtections(@NotNull UUID uuid) {
+        this.disablePlacingProtections.add(uuid);
+    }
+
+    public boolean hasDisablePlacingProtections(@NotNull UUID uuid) {
+        return this.disablePlacingProtections.contains(uuid);
+    }
+
+    public void removeDisablePlacingProtections(@NotNull UUID uuid) {
+        this.disablePlacingProtections.remove(uuid);
     }
 
     private void loadHighlighter() {

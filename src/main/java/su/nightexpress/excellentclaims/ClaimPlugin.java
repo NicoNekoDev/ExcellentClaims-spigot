@@ -36,8 +36,7 @@ public class ClaimPlugin extends NightPlugin implements ImprovedCommands {
         return PluginDetails.create("Claims", new String[]{"eclaim", "eclaims", "excellentclaims"})
             .setConfigClass(Config.class)
             .setLangClass(Lang.class)
-            .setPermissionsClass(Perms.class)
-            ;
+            .setPermissionsClass(Perms.class);
     }
 
     @Override

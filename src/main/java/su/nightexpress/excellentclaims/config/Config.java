@@ -184,6 +184,12 @@ public class Config {
         "Use '" + PLAYER_NAME + "' for player name."
     );
 
+    public static final ConfigValue<String> LAND_DEFAULT_DESCRIPTION = ConfigValue.create("Land.Default_Description",
+            "Welcome! Please don't stay here for too long.",
+            "Default description used for new claimed chunks.",
+            "Use '" + PLAYER_NAME + "' for player name."
+    );
+
     public static final ConfigValue<NightItem> LAND_DEFAULT_ICON = ConfigValue.create("Land.Default_Icon",
         ClaimUtils.getDefaultIcon(ClaimType.CHUNK),
         "Icon used for new chunks."

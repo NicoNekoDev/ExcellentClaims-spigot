@@ -1,6 +1,7 @@
 package su.nightexpress.excellentclaims.config;
 
 import org.bukkit.Sound;
+import org.jetbrains.annotations.NotNull;
 import su.nightexpress.excellentclaims.api.claim.ClaimPermission;
 import su.nightexpress.excellentclaims.command.impl.LandCommands;
 import su.nightexpress.excellentclaims.command.impl.RegionCommands;
@@ -82,6 +83,10 @@ public class Lang extends CoreLang {
 
     public static final LangText ADMIN_MODE_TOGGLE = LangText.of("AdminMode.Toggle",
         LIGHT_GRAY.enclose("Admin Mode: " + LIGHT_YELLOW.enclose(GENERIC_VALUE))
+    );
+
+    public static final LangText LAND_TOGGLE_MODE = LangText.of("Land.Claim.ToggleMode",
+            LIGHT_GRAY.enclose("Toggled block placing mode: " + LIGHT_YELLOW.enclose(GENERIC_VALUE))
     );
 
     public static final LangString WILDERNESS_DISPLAY_NAME = LangString.of("Wilderness.DisplayName", "Wilderness");
@@ -294,7 +299,7 @@ public class Lang extends CoreLang {
     public static final LangText REGION_CREATE_ERROR_ALREADY_EXISTS = LangText.of("Region.Create.Error.AlreadyExists",
         OUTPUT.enclose(20, 60) + SOUND.enclose(Sound.ENTITY_VILLAGER_NO),
         LIGHT_RED.enclose(BOLD.enclose("Already Exists!")),
-        LIGHT_GRAY.enclose("Region with such name already exists.")
+        LIGHT_GRAY.enclose("Region at this location already exists.")
     );
 
     public static final LangText REGION_CREATE_ERROR_OVERLAP_CHUNK = LangText.of("Region.Create.Error.ChunkOverlap",
@@ -629,4 +634,6 @@ public class Lang extends CoreLang {
     public static final LangText ERROR_COMMAND_INVALID_REGION_ARGUMENT = LangText.of("Error.Command.Argument.InvalidRegion",
         LIGHT_GRAY.enclose(LIGHT_RED.enclose(GENERIC_VALUE) + " is not a valid region!")
     );
+    public static final @NotNull LangString COMMAND_REGION_TOGGLE_DESC = LangString.of("Command.Region.Toggle.Description",
+            "Toggle between placing blocks or creating regions.");
 }

@@ -1,5 +1,6 @@
 package su.nightexpress.excellentclaims.config;
 
+import org.jetbrains.annotations.Nullable;
 import su.nightexpress.excellentclaims.Placeholders;
 import su.nightexpress.excellentclaims.api.flag.FlagCategory;
 import su.nightexpress.nightcore.util.wrapper.UniPermission;
@@ -43,6 +44,7 @@ public class Perms {
     public static final UniPermission COMMAND_REGION_RENAME      = new UniPermission(PREFIX_COMMAND + "region.rename");
     public static final UniPermission COMMAND_REGION_DESCRIPTION = new UniPermission(PREFIX_COMMAND + "region.description");
     public static final UniPermission COMMAND_REGION_TRANSFER    = new UniPermission(PREFIX_COMMAND + "region.transfer");
+    public static final UniPermission COMMAND_REGION_TOGGLE       = new UniPermission(PREFIX_COMMAND + "region.toggle");
 
     public static final UniPermission COMMAND_LAND             = new UniPermission(PREFIX_COMMAND + "land");
     public static final UniPermission COMMAND_LAND_CLAIM       = new UniPermission(PREFIX_COMMAND + "land.claim");

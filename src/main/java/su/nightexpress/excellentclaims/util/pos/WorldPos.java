@@ -3,6 +3,8 @@ package su.nightexpress.excellentclaims.util.pos;
 import org.bukkit.Chunk;
 import org.bukkit.Location;
 import org.bukkit.World;
+import org.bukkit.block.Block;
+import org.checkerframework.checker.units.qual.N;
 import org.jetbrains.annotations.NotNull;
 
 public interface WorldPos {
@@ -28,6 +30,11 @@ public interface WorldPos {
     @NotNull
     default Location toLocation(@NotNull World world) {
         return new Location(world, this.getX(), this.getY(), this.getZ());
+    }
+
+    @NotNull
+    default Block toBlock(@NotNull World world) {
+        return world.getBlockAt(this.toLocation(world));
     }
 
     @NotNull

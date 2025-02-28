@@ -4,6 +4,7 @@ import org.bukkit.World;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 import su.nightexpress.excellentclaims.ClaimPlugin;
+import su.nightexpress.excellentclaims.Placeholders;
 import su.nightexpress.excellentclaims.api.claim.ClaimPermission;
 import su.nightexpress.excellentclaims.api.claim.ClaimType;
 import su.nightexpress.excellentclaims.api.claim.RegionClaim;
@@ -40,6 +41,13 @@ public class RegionCommands {
         );
 
         ChainedNode root = command.getNode();
+
+        root.addChildren(DirectNode.builder(plugin, "toggle")
+                .playerOnly()
+                .description(Lang.COMMAND_REGION_TOGGLE_DESC)
+                .permission(Perms.COMMAND_REGION_TOGGLE)
+                .executes(RegionCommands::togglePlacingBlocks)
+        );
 
         root.addChildren(DirectNode.builder(plugin, "wand")
             .playerOnly()
@@ -140,6 +148,17 @@ public class RegionCommands {
         );
 
         plugin.getCommandManager().registerCommand(command);
+    }
+
+    private static boolean togglePlacingBlocks(@NotNull CommandContext context, @NotNull ParsedArguments arguments) {
+        Player player = context.getPlayerOrThrow();
+        boolean disable = plugin.getSelectionManager().hasDisablePlacingProtections(player.getUniqueId());
+        if (disable)
+            plugin.getSelectionManager().removeDisablePlacingProtections(player.getUniqueId());
+        else
+            plugin.getSelectionManager().setDisablePlacingProtections(player.getUniqueId());
+        Lang.LAND_TOGGLE_MODE.getMessage().send(player, replacer -> replacer.replace(Placeholders.GENERIC_VALUE, Lang.getEnabledOrDisabled(disable)));
+        return true;
     }
 
     public static void unload() {

@@ -2,13 +2,16 @@ package su.nightexpress.excellentclaims.util;
 
 import org.bukkit.Chunk;
 import org.bukkit.Location;
+import org.bukkit.Particle;
 import org.bukkit.World;
+import org.bukkit.entity.Player;
 import org.bukkit.util.NumberConversions;
 import org.jetbrains.annotations.NotNull;
 import su.nightexpress.excellentclaims.util.pos.BlockPos;
 import su.nightexpress.excellentclaims.util.pos.ChunkPos;
 
 import java.util.*;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 public class Cuboid {
@@ -192,6 +195,27 @@ public class Cuboid {
         return list;
     }
 
+    public Set<BlockPos> borderCornerWiresXZ(int y) {
+        Set<BlockPos> list = new HashSet<>();
+
+        list.add(new BlockPos(this.min.getX(), y, this.min.getZ()));
+        list.add(new BlockPos(this.min.getX(), y, this.max.getZ()));
+        list.add(new BlockPos(this.max.getX(), y, this.min.getZ()));
+        list.add(new BlockPos(this.max.getX(), y, this.max.getZ()));
+
+        for (int z = this.min.getZ() + 1; z < this.max.getZ(); z++) {
+            list.add(new BlockPos(this.min.getX(), y, z));
+            list.add(new BlockPos(this.max.getX(), y, z));
+        }
+
+        for (int x = this.min.getX() + 1; x < this.max.getX(); x++) {
+            list.add(new BlockPos(x, y, this.min.getZ()));
+            list.add(new BlockPos(x, y, this.max.getZ()));
+        }
+
+        return list;
+    }
+
     public boolean isIntersectingWith(@NotNull Cuboid other) {
         return this.isIntersectingWith(other, DimensionType._3D);
     }
@@ -209,8 +233,10 @@ public class Cuboid {
     }
 
     public boolean includedIn(@NotNull Cuboid other, @NotNull DimensionType dimensionType) {
-        if (!this.checkIntersect(this.min.getX(), this.max.getX(), other.getMin().getX(), other.getMax().getX())) return false;
-        if (!this.checkIntersect(this.min.getZ(), this.max.getZ(), other.getMin().getZ(), other.getMax().getZ())) return false;
+        if (!this.checkIntersect(this.min.getX(), this.max.getX(), other.getMin().getX(), other.getMax().getX()))
+            return false;
+        if (!this.checkIntersect(this.min.getZ(), this.max.getZ(), other.getMin().getZ(), other.getMax().getZ()))
+            return false;
 
         if (dimensionType == DimensionType._3D) {
             return this.checkIntersect(this.min.getY(), this.max.getY(), other.getMin().getY(), other.getMax().getY());

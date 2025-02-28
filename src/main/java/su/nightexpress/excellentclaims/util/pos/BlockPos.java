@@ -2,6 +2,7 @@ package su.nightexpress.excellentclaims.util.pos;
 
 import org.bukkit.Location;
 import org.bukkit.block.Block;
+import org.bukkit.block.BlockFace;
 import org.jetbrains.annotations.NotNull;
 import su.nightexpress.nightcore.config.FileConfig;
 import su.nightexpress.nightcore.util.NumberUtil;
@@ -80,6 +81,10 @@ public class BlockPos implements WorldPos {
     @Override
     public int getZ() {
         return z;
+    }
+
+    public BlockPos getRelative(BlockFace face) {
+        return new BlockPos(x + face.getModX(), y + face.getModY(), z + face.getModZ());
     }
 
     @Override
