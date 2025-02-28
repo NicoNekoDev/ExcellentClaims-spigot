@@ -9,11 +9,17 @@ public class Hooks {
 
     public static final String ECONOMY_BRIDGE = "EconomyBridge";
 
+    public static final String DELUXE_COMBAT = "DeluxeCombat";
+
     public static boolean hasPacketLibrary() {
         return Plugins.isInstalled(PACKET_EVENTS) || Plugins.isInstalled(PROTOCOL_LIB);
     }
 
     public static boolean hasEconomyBridge() {
         return Plugins.isInstalled(ECONOMY_BRIDGE);
+    }
+
+    public static boolean hasDeluxeCombat() {
+        return Plugins.isInstalled(DELUXE_COMBAT);
     }
 }

@@ -1,6 +1,12 @@
 package su.nightexpress.excellentclaims;
 
+import nl.marido.deluxecombat.hooks.template.BarrierProvider;
+import org.bukkit.Location;
+import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
+import su.nightexpress.excellentclaims.api.claim.Claim;
+import su.nightexpress.excellentclaims.api.claim.RegionClaim;
+import su.nightexpress.excellentclaims.api.flag.ClaimFlag;
 import su.nightexpress.excellentclaims.claim.ClaimManager;
 import su.nightexpress.excellentclaims.command.impl.BaseCommands;
 import su.nightexpress.excellentclaims.command.impl.LandCommands;
@@ -13,6 +19,8 @@ import su.nightexpress.excellentclaims.config.Perms;
 import su.nightexpress.excellentclaims.data.storage.DataManager;
 import su.nightexpress.excellentclaims.data.user.UserManager;
 import su.nightexpress.excellentclaims.flag.FlagRegistry;
+import su.nightexpress.excellentclaims.flag.list.PlayerFlags;
+import su.nightexpress.excellentclaims.hook.Hooks;
 import su.nightexpress.excellentclaims.member.MemberManager;
 import su.nightexpress.excellentclaims.menu.MenuManager;
 import su.nightexpress.excellentclaims.selection.SelectionManager;
@@ -20,23 +28,25 @@ import su.nightexpress.nightcore.NightPlugin;
 import su.nightexpress.nightcore.command.experimental.ImprovedCommands;
 import su.nightexpress.nightcore.config.PluginDetails;
 
+import java.util.Set;
+
 public class ClaimPlugin extends NightPlugin implements ImprovedCommands {
 
     private DataManager dataManager;
     private UserManager userManager;
 
-    private MemberManager    memberManager;
-    private ClaimManager     claimManager;
+    private MemberManager memberManager;
+    private ClaimManager claimManager;
     private SelectionManager selectionManager;
-    private MenuManager      menuManager;
+    private MenuManager menuManager;
 
     @Override
     @NotNull
     protected PluginDetails getDefaultDetails() {
         return PluginDetails.create("Claims", new String[]{"eclaim", "eclaims", "excellentclaims"})
-            .setConfigClass(Config.class)
-            .setLangClass(Lang.class)
-            .setPermissionsClass(Perms.class);
+                .setConfigClass(Config.class)
+                .setLangClass(Lang.class)
+                .setPermissionsClass(Perms.class);
     }
 
     @Override
@@ -62,6 +72,41 @@ public class ClaimPlugin extends NightPlugin implements ImprovedCommands {
 
         this.selectionManager = new SelectionManager(this);
         this.selectionManager.setup();
+
+        if (Hooks.hasDeluxeCombat())
+            new BarrierProvider() {
+                @Override
+                public boolean isBorderEnabled() {
+                    return true;
+                }
+
+                @Override
+                public String getBorderMode() {
+                    return "BOTH";
+                }
+
+                @Override
+                public String getBorderMaterial() {
+                    return "RED_STAINED_GLASS";
+                }
+
+                @Override
+                public double getKnockBackStrength() {
+                    return 0.5;
+                }
+
+                @Override
+                public boolean allowPvP(Player p, Location location) {
+                    Set<RegionClaim> claims = claimManager.getRegionClaims(location);
+                    if (!claims.isEmpty())
+                        for (RegionClaim claim : claims)
+                            if (claim.getCuboid().contains(location) &&
+                                    claim.hasFlag(PlayerFlags.PLAYER_DAMAGE_PLAYERS) &&
+                                    !claim.getFlag(PlayerFlags.PLAYER_DAMAGE_PLAYERS))
+                                return false;
+                    return true;
+                }
+            };
     }
 
     @Override

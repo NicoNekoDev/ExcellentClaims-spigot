@@ -92,6 +92,14 @@
             <version>2.11.2</version>
             <scope>provided</scope>
         </dependency>
+
+        <dependency>
+            <groupId>com.github.timderspieler</groupId>
+            <artifactId>DeluxeCombat-API</artifactId>
+            <version>1.5.1</version>
+            <scope>provided</scope>
+        </dependency>
+
     </dependencies>
 
     <build>

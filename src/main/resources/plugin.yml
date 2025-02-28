@@ -9,4 +9,5 @@ softdepend:
   - ProtocolLib
   - packetevents
   - EconomyBridge
+  - DeluxeCombat
 api-version: 1.21
