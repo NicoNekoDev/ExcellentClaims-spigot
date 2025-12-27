@@ -9,4 +9,6 @@ softdepend:
   - ProtocolLib
   - packetevents
   - PlaceholderAPI
+  - DeluxeCombat
+  - BetterRTP
 api-version: 1.21

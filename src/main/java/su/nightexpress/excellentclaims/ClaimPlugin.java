@@ -13,6 +13,9 @@ import su.nightexpress.excellentclaims.config.Perms;
 import su.nightexpress.excellentclaims.data.storage.DataManager;
 import su.nightexpress.excellentclaims.data.user.UserManager;
 import su.nightexpress.excellentclaims.flag.FlagRegistry;
+import su.nightexpress.excellentclaims.hook.Hooks;
+import su.nightexpress.excellentclaims.hook.impl.BetterRtpHook;
+import su.nightexpress.excellentclaims.hook.impl.DeluxeCombatHook;
 import su.nightexpress.excellentclaims.hook.impl.PlaceholderHook;
 import su.nightexpress.excellentclaims.member.MemberManager;
 import su.nightexpress.excellentclaims.menu.MenuManager;
@@ -27,18 +30,18 @@ public class ClaimPlugin extends NightPlugin implements ImprovedCommands {
     private DataManager dataManager;
     private UserManager userManager;
 
-    private MemberManager    memberManager;
-    private ClaimManager     claimManager;
+    private MemberManager memberManager;
+    private ClaimManager claimManager;
     private SelectionManager selectionManager;
-    private MenuManager      menuManager;
+    private MenuManager menuManager;
 
     @Override
     @NotNull
     protected PluginDetails getDefaultDetails() {
         return PluginDetails.create("Claims", new String[]{"eclaim", "eclaims", "excellentclaims"})
-            .setConfigClass(Config.class)
-            .setLangClass(Lang.class)
-            .setPermissionsClass(Perms.class);
+                .setConfigClass(Config.class)
+                .setLangClass(Lang.class)
+                .setPermissionsClass(Perms.class);
     }
 
     @Override
@@ -67,6 +70,14 @@ public class ClaimPlugin extends NightPlugin implements ImprovedCommands {
 
         if (Plugins.hasPlaceholderAPI()) {
             PlaceholderHook.setup(this);
+        }
+
+        if (Hooks.hasDeluxeCombat()) {
+            DeluxeCombatHook.setup(this);
+        }
+
+        if (Hooks.hasBetterRtp()) {
+            BetterRtpHook.setup(this);
         }
     }
 

@@ -92,6 +92,21 @@
             <version>2.11.6</version>
             <scope>provided</scope>
         </dependency>
+
+        <dependency>
+            <groupId>com.github.timderspieler</groupId>
+            <artifactId>DeluxeCombat-API</artifactId>
+            <version>1.5.1</version>
+            <scope>provided</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>me.SuperRonanCraft</groupId>
+            <artifactId>BetterRTP</artifactId>
+            <version>1.0</version>
+            <scope>system</scope>
+            <systemPath>${project.basedir}/libs/BetterRTP-3.6.13.jar</systemPath>
+        </dependency>
     </dependencies>
 
     <build>
