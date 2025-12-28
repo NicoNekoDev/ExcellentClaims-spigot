@@ -1,7 +1,6 @@
 package su.nightexpress.excellentclaims.claim;
 
-import org.bukkit.Location;
-import org.bukkit.World;
+import org.bukkit.*;
 import org.bukkit.block.Block;
 import org.bukkit.command.Command;
 import org.bukkit.damage.DamageType;
@@ -76,6 +75,8 @@ public class ClaimManager extends AbstractManager<ClaimPlugin> {
         this.addListener(new FlagListener(this.plugin, this));
 
         this.addAsyncTask(this::saveClaims, Config.GENERAL_SAVE_INTERVAL.get());
+
+        this.addTask(this::showBounds, 1);
     }
 
     @Override
@@ -102,6 +103,65 @@ public class ClaimManager extends AbstractManager<ClaimPlugin> {
         claim.save();
         claim.setSaveRequired(false);
         //plugin.debug("Claim saved on the disk: " + claim.getId());
+    }
+
+    public void showBounds() {
+        for (World world : Bukkit.getWorlds()) {
+            Map<ChunkPos, LandClaim> chunkPositions = new HashMap<>();
+            for (Claim claim : storage.getClaims(world)) {
+                if (claim instanceof LandClaim land) {
+                    for (ChunkPos chunkPos : land.getPositions()) {
+                        chunkPositions.put(chunkPos, land);
+                    }
+                }
+            }
+            for (Player player : world.getPlayers()) {
+                Map<ChunkPos, Particle.DustOptions> borders = new HashMap<>();
+                Chunk playerChunk = player.getLocation().getChunk();
+                for (int x = playerChunk.getX() - 2; x < playerChunk.getX() + 2; x++) {
+                    for (int z = playerChunk.getZ() - 2; z < playerChunk.getZ() + 2; z++) {
+                        ChunkPos chunkPos = new ChunkPos(x, z);
+                        if (chunkPositions.containsKey(chunkPos)) {
+                            LandClaim land = chunkPositions.get(chunkPos);
+                            Particle.DustOptions dustOptions = new Particle.DustOptions(Color.fromRGB(255, 0, 0), 2F);
+                            if (land.isMember(player))
+                                dustOptions = new Particle.DustOptions(Color.fromRGB(255, 128, 0), 2F);
+                            if (land.isOwner(player))
+                                dustOptions = new Particle.DustOptions(Color.fromRGB(0, 255, 0), 2F);
+                            borders.put(chunkPos, dustOptions);
+                        }
+                    }
+                }
+                for (Map.Entry<ChunkPos, Particle.DustOptions> entry : borders.entrySet()) {
+                    ChunkPos chunk = entry.getKey();
+                    int xStart = chunk.getX() << 4;
+                    int zStart = chunk.getZ() << 4;
+                    int xEnd = xStart + 15;
+                    int zEnd = zStart + 15;
+                    double y = player.getLocation().getBlockY() + 0.1;
+                    if (!chunkPositions.containsKey(new ChunkPos(chunk.getX() - 1, chunk.getZ()))) {
+                        for (int z = zStart; z <= zEnd; z++) {
+                            player.spawnParticle(Particle.DUST, new Location(world, xStart + 0.5, y, z + 0.5), 1, entry.getValue());
+                        }
+                    }
+                    if (!chunkPositions.containsKey(new ChunkPos(chunk.getX() + 1, chunk.getZ()))) {
+                        for (int z = zStart; z <= zEnd; z++) {
+                            player.spawnParticle(Particle.DUST, new Location(world, xEnd + 0.5, y, z + 0.5), 1, entry.getValue());
+                        }
+                    }
+                    if (!chunkPositions.containsKey(new ChunkPos(chunk.getX(), chunk.getZ() - 1))) {
+                        for (int x = xStart; x <= xEnd; x++) {
+                            player.spawnParticle(Particle.DUST, new Location(world, x + 0.5, y, zStart + 0.5), 1, entry.getValue());
+                        }
+                    }
+                    if (!chunkPositions.containsKey(new ChunkPos(chunk.getX(), chunk.getZ() + 1))) {
+                        for (int x = xStart; x <= xEnd; x++) {
+                            player.spawnParticle(Particle.DUST, new Location(world, x + 0.5, y, zEnd + 0.5), 1, entry.getValue());
+                        }
+                    }
+                }
+            }
+        }
     }
 
     @NotNull
@@ -136,16 +196,14 @@ public class ClaimManager extends AbstractManager<ClaimPlugin> {
         if (claim.load()) {
             claim.reactivate();
             this.storage.add(claim);
-        }
-        else this.plugin.error("Claim not loaded: '" + claim.getFile().getPath() + "'!");
+        } else this.plugin.error("Claim not loaded: '" + claim.getFile().getPath() + "'!");
     }
 
     private void loadWilderness(@NotNull World world) {
         Wilderness wilderness = this.storage.getWilderness(world);
         if (wilderness == null) {
             this.createWilderness(world);
-        }
-        else if (!wilderness.isActive()) wilderness.activate(world);
+        } else if (!wilderness.isActive()) wilderness.activate(world);
     }
 
     private void deleteClaim(@NotNull Claim claim) {
@@ -334,8 +392,7 @@ public class ClaimManager extends AbstractManager<ClaimPlugin> {
         if (landByName == null) {
             claim = this.createLandClaim(player, world, chunkPos, name);
             claim.setDisplayName(StringUtil.capitalizeUnderscored(name));
-        }
-        else {
+        } else {
             claim = landByName;
             landByName.getPositions().add(chunkPos);
             landByName.setSaveRequired(true);
@@ -519,7 +576,7 @@ public class ClaimManager extends AbstractManager<ClaimPlugin> {
 
         if (maxBlocks > 0 && !player.hasPermission(Perms.BYPASS_REGION_BLOCKS_AMOUNT) && volume > maxBlocks) {
             Lang.REGION_CREATE_ERROR_MAX_BLOCKS.getMessage().send(player, replacer -> replacer
-                .replace(Placeholders.GENERIC_AMOUNT, NumberUtil.formatCompact(maxBlocks))
+                    .replace(Placeholders.GENERIC_AMOUNT, NumberUtil.formatCompact(maxBlocks))
             );
             return false;
         }
@@ -798,7 +855,6 @@ public class ClaimManager extends AbstractManager<ClaimPlugin> {
     }
 
 
-
     public boolean testClaim(@NotNull Location location, @NotNull Supplier<Predicate<Claim>> predicateSupplier) {
         Claim claim = this.getPrioritizedClaim(location);
         if (claim == null) return true;
@@ -988,7 +1044,6 @@ public class ClaimManager extends AbstractManager<ClaimPlugin> {
     }
 
 
-
     @NotNull
     public String getClaimsDirectory(@NotNull ClaimType type, @NotNull World world) {
         return this.getClaimsDirectory(type, world.getName());
@@ -1027,7 +1082,6 @@ public class ClaimManager extends AbstractManager<ClaimPlugin> {
     }
 
 
-
     @Nullable
     public RegionClaim getPrioritizedRegion(@NotNull Block block) {
         return this.getPrioritizedRegion(this.getPrioritizedClaim(block));
@@ -1047,7 +1101,6 @@ public class ClaimManager extends AbstractManager<ClaimPlugin> {
     private RegionClaim getPrioritizedRegion(@Nullable Claim claim) {
         return claim instanceof RegionClaim regionClaim ? regionClaim : null;
     }
-
 
 
     @Nullable
