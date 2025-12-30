@@ -882,7 +882,8 @@ public class ClaimManager extends AbstractManager<ClaimPlugin> {
     }
 
     public boolean canDamage(@Nullable Entity damager, @NotNull Entity target, @NotNull DamageType damageType) {
-        return this.testClaim(target.getLocation(), () -> FlagUtils.getEntityDamagePredicate(target, damager, damageType));
+        Supplier<Predicate<Claim>> predicateSupplier = () -> FlagUtils.getEntityDamagePredicate(target, damager, damageType);
+        return (damager != null && this.testClaim(damager.getLocation(), predicateSupplier)) && this.testClaim(target.getLocation(), predicateSupplier);
     }
 
     public boolean canThrowProjectile(@NotNull Player player, @NotNull Projectile projectile) {

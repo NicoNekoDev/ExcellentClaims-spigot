@@ -38,12 +38,20 @@ public class Wilderness extends AbstractClaim {
     @Override
     protected boolean onLoad(@NotNull FileConfig config) {
         this.loadWorldInfo(config);
-        this.loadFlags(config);
         this.setDisplayName(Lang.WILDERNESS_DISPLAY_NAME.getString());
         this.setDescription("");
         this.setPriority(0);
         this.setIcon(new NightItem(Material.GRASS_BLOCK));
         this.setSpawnLocation(ExactPos.empty());
+
+        this.mobSpawnList.load(config, "Settings.Advanced.MobSpawnList");
+        this.mobInteractList.load(config, "Settings.Advanced.MobInteractList");
+        this.blockUsageList.load(config, "Settings.Advanced.BlockUsageList");
+        this.animalDamageList.load(config, "Settings.Advanced.AnimalDamageList");
+        this.playerDamageList.load(config, "Settings.Advanced.PlayerDamageList");
+        this.commandUsageList.load(config, "Settings.Advanced.CommandUsageList");
+
+        this.loadFlags(config);
 
         return this.loadAdditional(config);
     }
@@ -51,8 +59,19 @@ public class Wilderness extends AbstractClaim {
     @Override
     protected void onSave(@NotNull FileConfig config) {
         this.writeWorldInfo(config);
+        this.writeSettings(config);
         this.writeFlags(config);
         this.saveAdditional(config);
+    }
+
+    @Override
+    protected void writeSettings(@NotNull FileConfig config) {
+        config.set("Settings.Advanced.MobSpawnList", this.mobSpawnList);
+        config.set("Settings.Advanced.MobInteractList", this.mobInteractList);
+        config.set("Settings.Advanced.BlockUsageList", this.blockUsageList);
+        config.set("Settings.Advanced.AnimalDamageList", this.animalDamageList);
+        config.set("Settings.Advanced.PlayerDamageList", this.playerDamageList);
+        config.set("Settings.Advanced.CommandUsageList", this.commandUsageList);
     }
 
     @Override

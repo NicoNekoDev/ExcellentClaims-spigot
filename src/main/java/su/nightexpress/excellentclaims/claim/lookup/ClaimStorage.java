@@ -37,26 +37,22 @@ public class ClaimStorage {
     }
 
     public void add(@NotNull Claim claim) {
-        if (claim instanceof Wilderness wilderness) {
-            this.wildernessMap.put(claim.getWorldName().toLowerCase(), wilderness);
-        }
-        else if (claim instanceof LandClaim landClaim) {
-            this.landLookup.update(landClaim);
-        }
-        else if (claim instanceof RegionClaim regionClaim) {
-            this.regionLookup.update(regionClaim);
+        switch (claim) {
+            case Wilderness wilderness -> this.wildernessMap.put(claim.getWorldName().toLowerCase(), wilderness);
+            case LandClaim landClaim -> this.landLookup.update(landClaim);
+            case RegionClaim regionClaim -> this.regionLookup.update(regionClaim);
+            default -> {
+            }
         }
     }
 
     public void remove(@NotNull Claim claim) {
-        if (claim instanceof Wilderness) {
-            this.wildernessMap.remove(claim.getWorldName().toLowerCase());
-        }
-        else if (claim instanceof LandClaim landClaim) {
-            this.landLookup.purge(landClaim);
-        }
-        else if (claim instanceof RegionClaim regionClaim) {
-            this.regionLookup.purge(regionClaim);
+        switch (claim) {
+            case Wilderness wilderness -> this.wildernessMap.remove(claim.getWorldName().toLowerCase());
+            case LandClaim landClaim -> this.landLookup.purge(landClaim);
+            case RegionClaim regionClaim -> this.regionLookup.purge(regionClaim);
+            default -> {
+            }
         }
     }
 

@@ -32,9 +32,7 @@ public class WorldLookup<T extends Claim> {
     public void store(@NotNull T claim) {
         this.byIdMap.put(claim.getId(), claim);
 
-        claim.getEffectiveChunkPositions().forEach(chunkPos -> {
-            this.byChunkPosMap.computeIfAbsent(chunkPos, k -> new HashSet<>()).add(claim);
-        });
+        claim.getEffectiveChunkPositions().forEach(chunkPos -> this.byChunkPosMap.computeIfAbsent(chunkPos, k -> new HashSet<>()).add(claim));
 
         this.byOwnerIdMap.computeIfAbsent(claim.getOwnerId(), k -> new HashSet<>()).add(claim);
     }

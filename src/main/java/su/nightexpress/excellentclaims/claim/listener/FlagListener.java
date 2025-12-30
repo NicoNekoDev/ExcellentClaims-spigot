@@ -159,22 +159,17 @@ public class FlagListener extends AbstractListener<ClaimPlugin> {
 
         if (fromType == Material.TURTLE_EGG) {
             flag = NaturalFlags.TURTLE_EGG_HATCH;
-        }
-        else if (fromType == Material.AIR && toType == Material.CACTUS) {
+        } else if (fromType == Material.AIR && toType == Material.CACTUS) {
             flag = NaturalFlags.CACTUS_GROW;
             source = block.getRelative(BlockFace.DOWN).getLocation(); // Because it grows at new 'air' position.
-        }
-        else if (fromType == Material.AIR && toType == Material.SUGAR_CANE) {
+        } else if (fromType == Material.AIR && toType == Material.SUGAR_CANE) {
             flag = NaturalFlags.SUGAR_CANE_GROW;
             source = block.getRelative(BlockFace.DOWN).getLocation(); // Because it grows at new 'air' position.
-        }
-        else if (fromType == Material.SMALL_AMETHYST_BUD || fromType == Material.MEDIUM_AMETHYST_BUD || fromType == Material.LARGE_AMETHYST_BUD || fromType == Material.AMETHYST_CLUSTER) {
+        } else if (fromType == Material.SMALL_AMETHYST_BUD || fromType == Material.MEDIUM_AMETHYST_BUD || fromType == Material.LARGE_AMETHYST_BUD || fromType == Material.AMETHYST_CLUSTER) {
             flag = NaturalFlags.AMETHYST_GROW;
-        }
-        else if (blockData instanceof Ageable) {
+        } else if (blockData instanceof Ageable) {
             flag = NaturalFlags.CROP_GROW;
-        }
-        else return;
+        } else return;
 
 
         Relation relation = this.manager.getRelation(source, target);
@@ -193,14 +188,11 @@ public class FlagListener extends AbstractListener<ClaimPlugin> {
 
         if (material == Material.ICE) {
             flag = NaturalFlags.ICE_FORM;
-        }
-        else if (material == Material.SNOW) {
+        } else if (material == Material.SNOW) {
             flag = NaturalFlags.SNOW_FORM;
-        }
-        else if (material == Material.CAVE_VINES || material == Material.VINE) {
+        } else if (material == Material.CAVE_VINES || material == Material.VINE) {
             flag = NaturalFlags.VINE_GROW;
-        }
-        else return;
+        } else return;
 
         Location source = block.getLocation();
         Location target = newState.getLocation();
@@ -224,23 +216,17 @@ public class FlagListener extends AbstractListener<ClaimPlugin> {
 
         if (targetType == Material.GRASS_BLOCK) {
             flag = NaturalFlags.GRASS_GROW;
-        }
-        else if (targetType == Material.BAMBOO) {
+        } else if (targetType == Material.BAMBOO) {
             flag = NaturalFlags.BAMBOO_GROW;
-        }
-        else if (targetType == Material.MYCELIUM) {
+        } else if (targetType == Material.MYCELIUM) {
             flag = NaturalFlags.MYCELIUM_SPREAD;
-        }
-        else if (targetType == Material.FIRE) {
+        } else if (targetType == Material.FIRE) {
             flag = NaturalFlags.FIRE_SPREAD;
-        }
-        else if (targetType == Material.CAVE_VINES || targetType == Material.VINE || targetType == Material.KELP) {
+        } else if (targetType == Material.CAVE_VINES || targetType == Material.VINE || targetType == Material.KELP) {
             flag = NaturalFlags.VINE_GROW;
-        }
-        else if (targetType == Material.SMALL_AMETHYST_BUD || targetType == Material.MEDIUM_AMETHYST_BUD || targetType == Material.LARGE_AMETHYST_BUD) {
+        } else if (targetType == Material.SMALL_AMETHYST_BUD || targetType == Material.MEDIUM_AMETHYST_BUD || targetType == Material.LARGE_AMETHYST_BUD) {
             flag = NaturalFlags.AMETHYST_FORM;
-        }
-        else {
+        } else {
 
             return;
         }
@@ -266,20 +252,15 @@ public class FlagListener extends AbstractListener<ClaimPlugin> {
 
         if (fromMaterial == Material.ICE && toMaterial == Material.WATER) {
             flag = NaturalFlags.ICE_MELT;
-        }
-        else if (fromMaterial == Material.SNOW && toMaterial == Material.AIR) {
+        } else if (fromMaterial == Material.SNOW && toMaterial == Material.AIR) {
             flag = NaturalFlags.SNOW_MELT;
-        }
-        else if (fromMaterial == Material.FIRE && toMaterial == Material.AIR) {
+        } else if (fromMaterial == Material.FIRE && toMaterial == Material.AIR) {
             flag = NaturalFlags.FIRE_BURN_OUT;
-        }
-        else if (fromMaterial == Material.FARMLAND && toMaterial == Material.DIRT) {
+        } else if (fromMaterial == Material.FARMLAND && toMaterial == Material.DIRT) {
             flag = NaturalFlags.FARMLAND_DRY;
-        }
-        else if (Tag.CORALS.isTagged(fromMaterial) || Tag.CORAL_BLOCKS.isTagged(fromMaterial)) {
+        } else if (Tag.CORALS.isTagged(fromMaterial) || Tag.CORAL_BLOCKS.isTagged(fromMaterial)) {
             flag = NaturalFlags.CORAL_DIE;
-        }
-        else return;
+        } else return;
 
         Location source = block.getLocation();
         Location target = newState.getLocation();
@@ -357,11 +338,9 @@ public class FlagListener extends AbstractListener<ClaimPlugin> {
         ClaimFlag<Boolean> flag;
         if (fromType == Material.WATER) {
             flag = NaturalFlags.WATER_FLOW;
-        }
-        else if (fromType == Material.LAVA) {
+        } else if (fromType == Material.LAVA) {
             flag = NaturalFlags.LAVA_FLOW;
-        }
-        else return;
+        } else return;
 
         Relation relation = this.manager.getRelation(sourceBlock.getLocation(), targetBlock.getLocation());
         if (relation.getType() == RelationType.INVADE && !relation.checkTargetFlag(flag)) {
@@ -549,20 +528,15 @@ public class FlagListener extends AbstractListener<ClaimPlugin> {
 
         if (entityType == EntityType.TNT || entityType == EntityType.TNT_MINECART) {
             flag = NaturalFlags.TNT_BLOCK_DAMAGE;
-        }
-        else if (entityType == EntityType.CREEPER) {
+        } else if (entityType == EntityType.CREEPER) {
             flag = EntityFlags.CREEPER_BLOCK_DAMAGE;
-        }
-        else if (entityType == EntityType.WITHER_SKULL || entityType == EntityType.WITHER) {
+        } else if (entityType == EntityType.WITHER_SKULL || entityType == EntityType.WITHER) {
             flag = EntityFlags.WITHER_BLOCK_DAMAGE;
-        }
-        else if (entityType == EntityType.FIREBALL || entityType == EntityType.SMALL_FIREBALL || entityType == EntityType.DRAGON_FIREBALL) {
+        } else if (entityType == EntityType.FIREBALL || entityType == EntityType.SMALL_FIREBALL || entityType == EntityType.DRAGON_FIREBALL) {
             flag = EntityFlags.FIREBALL_BLOCK_DAMAGE;
-        }
-        else if (entityType == EntityType.END_CRYSTAL) {
+        } else if (entityType == EntityType.END_CRYSTAL) {
             flag = EntityFlags.END_CRYSTAL_BLOCK_DAMAGE;
-        }
-        else {
+        } else {
             flag = NaturalFlags.EXPLOSION_BLOCK_DAMAGE;
         }
 
@@ -604,26 +578,19 @@ public class FlagListener extends AbstractListener<ClaimPlugin> {
         ClaimFlag<Boolean> flag;
         if (entityType == EntityType.SILVERFISH) {
             flag = EntityFlags.SILVERFISH_INFEST;
-        }
-        else if (entityType == EntityType.PLAYER && fromType == Material.FARMLAND) {
+        } else if (entityType == EntityType.PLAYER && fromType == Material.FARMLAND) {
             flag = PlayerFlags.BLOCK_TRAMPLING;
-        }
-        else if (entityType == EntityType.VILLAGER) {
+        } else if (entityType == EntityType.VILLAGER) {
             flag = EntityFlags.VILLAGER_FARM;
-        }
-        else if (entity instanceof Animals) {
+        } else if (entity instanceof Animals) {
             flag = EntityFlags.ANIMAL_GRIEF;
-        }
-        else if (entityType == EntityType.ENDERMAN) {
+        } else if (entityType == EntityType.ENDERMAN) {
             flag = EntityFlags.ENDERMAN_GRIEF;
-        }
-        else if (entityType == EntityType.RAVAGER) {
+        } else if (entityType == EntityType.RAVAGER) {
             flag = EntityFlags.RAVAGER_GRIEF;
-        }
-        else if (entityType == EntityType.ENDER_DRAGON) {
+        } else if (entityType == EntityType.ENDER_DRAGON) {
             flag = EntityFlags.ENDER_DRAGON_GRIEF;
-        }
-        else return;
+        } else return;
 
         if (!claim.hasFlag(flag)) return;
         if (!claim.getFlag(flag)) {
@@ -645,8 +612,7 @@ public class FlagListener extends AbstractListener<ClaimPlugin> {
         ClaimFlag<Boolean> flag;
         if (entityType == EntityType.SNOW_GOLEM && toType == Material.SNOW) {
             flag = EntityFlags.SNOWMAN_TRAIL;
-        }
-        else return;
+        } else return;
 
         Relation relation = this.manager.getRelation(sourceBlock.getLocation(), toState.getLocation());
         if (relation.getType() == RelationType.INVADE || !relation.checkBothFlag(flag)) {
@@ -662,7 +628,8 @@ public class FlagListener extends AbstractListener<ClaimPlugin> {
 
         if (!this.manager.canDamage(damager, target, source.getDamageType())) {
             event.setCancelled(true);
-            if (damager != null) Lang.PROTECTION_DAMAGE_ENTITY.getMessage().send(damager, replacer -> replacer.replace(Placeholders.GENERIC_VALUE, LangUtil.getSerializedName(target.getType())));
+            if (damager != null)
+                Lang.PROTECTION_DAMAGE_ENTITY.getMessage().send(damager, replacer -> replacer.replace(Placeholders.GENERIC_VALUE, LangUtil.getSerializedName(target.getType())));
         }
     }
 
@@ -672,7 +639,7 @@ public class FlagListener extends AbstractListener<ClaimPlugin> {
         Hanging hanging = event.getEntity();
         Location location = hanging.getLocation();
 
-        if (!(remover instanceof Player player) || (!this.manager.canBreak(player, location))) {
+        if (remover != null && (!(remover instanceof Player player) || (!this.manager.canBreak(player, location)))) {
             event.setCancelled(true);
             Lang.PROTECTION_BLOCK_BREAK.getMessage().send(remover, replacer -> replacer.replace(Placeholders.GENERIC_VALUE, LangUtil.getSerializedName(hanging.getType())));
         }
@@ -694,7 +661,7 @@ public class FlagListener extends AbstractListener<ClaimPlugin> {
         Vehicle vehicle = event.getVehicle();
         Location location = vehicle.getLocation();
 
-        if (!(remover instanceof Player player) || (!this.manager.canBreak(player, location))) {
+        if (remover != null && (!(remover instanceof Player player) || (!this.manager.canBreak(player, location)))) {
             event.setCancelled(true);
             Lang.PROTECTION_BLOCK_BREAK.getMessage().send(remover, replacer -> replacer.replace(Placeholders.GENERIC_VALUE, LangUtil.getSerializedName(vehicle.getType())));
         }
